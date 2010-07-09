@@ -1,0 +1,7 @@
+﻿#
+# Module files
+*/*.iml
+# Idea project
+.idea/
+#Output
+*/target/
