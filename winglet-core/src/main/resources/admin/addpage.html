@@ -1,0 +1,14 @@
+<lift:surround with="default" at="content" xmlns:lift="lift">
+    <h3>Add page</h3>
+
+    <lift:Admin.addPage form="POST">
+        <p><label for="name">Name:</label><br/>
+        <page:name/><br/></p>
+
+        <p><label for="url">Url:</label><br/>
+        <page:url/><br/></p>
+
+        <p><page:submit/></p>
+    </lift:Admin.addPage>
+</lift:surround>
+
