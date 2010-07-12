@@ -9,6 +9,7 @@ import com.primalrecode.winglet.model.{Block, Page}
 import java.util.ArrayList
 import net.liftweb.http.{S, SHtml, TemplateFinder, LiftView}
 import scala.collection.JavaConversions._
+import net.liftweb.textile.TextileParser
 
 class Pages extends LiftView with Injection{
   @Inject
@@ -18,26 +19,22 @@ class Pages extends LiftView with Injection{
     case pageId => () => renderPage(pageId)
   }
 
+  private def renderBlocks(page:Page) = page.blocks.flatMap(b => TextileParser.parse(b.text, None).get.toHtml)
+
   private def renderPage(pageId:String) = {
     val page = model.find(classOf[Page], pageId)
-    val renderedBlocks = page.get.blocks.flatMap(b => <div>
-      {b.text}
-    </div>)
+    val renderedBlocks = <div id="pageblocks">{renderBlocks(page.get)}</div>
     val commiter = new BlockCommiter(pageId)
     val template = TemplateFinder.findAnyTemplate("templates-hidden" :: "page" :: Nil).open_!
     bind("page", template,
       "blocks" -> renderedBlocks,
       "name" -> page.map(_.name).getOrElse("fail"),
       "addBlock" -> SHtml.a(<div>Add block</div>) {
-        JsCmds.SetHtml("editor", bind("e",
-          <lift:form>
-            <e:textArea/>
-            <e:submit/>
-          </lift:form>,
-          "textArea" -> SHtml.textarea("", commiter.blockText = _),
+        JsCmds.SetHtml("editor", bind("e", TemplateFinder.findAnyTemplate("templates-hidden" :: "blockeditor" :: Nil).open_!,
+          "textArea" -%> SHtml.textarea("", commiter.blockText = _),
           "submit" -> SHtml.ajaxSubmit("Save", () => {
             commiter.commit
-            JsCmds.SetHtml("editor", <div></div>)
+            JsCmds.CmdPair(JsCmds.SetHtml("editor", <div></div>), JsCmds.SetHtml("pageblocks", renderBlocks(model.find(classOf[Page], pageId).get)))
           }))
           )
       }
