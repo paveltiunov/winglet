@@ -10,39 +10,50 @@ import java.util.ArrayList
 import net.liftweb.http.{S, SHtml, TemplateFinder, LiftView}
 import scala.collection.JavaConversions._
 import net.liftweb.textile.TextileParser
+import net.liftweb.common.Box
 
-class Pages extends LiftView with Injection{
+class Pages extends LiftView with Injection {
   @Inject
-  var model:Model = _;
+  var model: Model = _;
 
   def dispatch = {
     case pageId => () => renderPage(pageId)
   }
 
-  private def renderBlocks(page:Page) = page.blocks.flatMap(b => TextileParser.parse(b.text, None).get.toHtml)
+  private def renderBlocks(page: Page) = page.blocks.flatMap(b => TextileParser.parse(b.text, None).get.toHtml)
 
-  private def renderPage(pageId:String) = {
-    val page = model.find(classOf[Page], pageId)
-    val renderedBlocks = <div id="pageblocks">{renderBlocks(page.get)}</div>
-    val commiter = new BlockCommiter(pageId)
-    val template = TemplateFinder.findAnyTemplate("templates-hidden" :: "page" :: Nil).open_!
-    bind("page", template,
+  private def getTemplate(name:String) = TemplateFinder.findAnyTemplate("templates-hidden" :: name :: Nil) ?~ (name + " template not found")
+
+  private def renderPage(pageId: String) = {
+    for{
+      page <- Box(model.find(classOf[Page], pageId)) ?~ ("Page not found")
+      template <- getTemplate("page")
+      blockEditorTemplate <- getTemplate("blockeditor")
+      val renderedBlocks = <div id="pageblocks">{renderBlocks(page)}</div>
+      val commiter = new BlockCommiter(pageId)
+    } yield bind(
+      "page", template,
       "blocks" -> renderedBlocks,
-      "name" -> page.map(_.name).getOrElse("fail"),
+      "name" -> page.name,
       "addBlock" -> SHtml.a(<div>Add block</div>) {
-        JsCmds.SetHtml("editor", bind("e", TemplateFinder.findAnyTemplate("templates-hidden" :: "blockeditor" :: Nil).open_!,
-          "textArea" -%> SHtml.textarea("", commiter.blockText = _),
-          "submit" -> SHtml.ajaxSubmit("Save", () => {
-            commiter.commit
-            JsCmds.CmdPair(JsCmds.SetHtml("editor", <div></div>), JsCmds.SetHtml("pageblocks", renderBlocks(model.find(classOf[Page], pageId).get)))
-          }))
+        JsCmds.SetHtml(
+          "editor", bind(
+            "e", blockEditorTemplate,
+            "textArea" -%> SHtml.textarea("", commiter.blockText = _),
+            "submit" -> SHtml.ajaxSubmit(
+              "Save", () => {
+                commiter.commit
+                JsCmds.CmdPair(JsCmds.SetHtml("editor", <div></div>), JsCmds.SetHtml("pageblocks", renderBlocks(model.find(classOf[Page], pageId).get)))
+              }
+            )
           )
+        )
       }
     )
   }
 
-  class BlockCommiter(pageId:String) {
-    var blockText:String = _
+  class BlockCommiter(pageId: String) {
+    var blockText: String = _
 
     def commit() {
       val page = model.find(classOf[Page], pageId).get
@@ -51,4 +62,5 @@ class Pages extends LiftView with Injection{
       page.blocks.add(block)
     }
   }
+
 }
