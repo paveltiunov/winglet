@@ -12,6 +12,7 @@
     <name>Winglet</name>
     <properties>
         <scala.version>2.8.0.RC6</scala.version>
+        <gae.version>1.3.4</gae.version>
     </properties>
     <modules>
         <module>winglet-core</module>
