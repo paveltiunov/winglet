@@ -6,11 +6,11 @@ import _root_.net.liftweb.util.Helpers
 import Helpers._
 import net.liftweb.http.js.JsCmds
 import com.primalrecode.winglet.model.{Block, Page}
-import java.util.ArrayList
 import net.liftweb.http.{S, SHtml, TemplateFinder, LiftView}
 import scala.collection.JavaConversions._
 import net.liftweb.textile.TextileParser
 import net.liftweb.common.Box
+import xml.NodeSeq
 
 class Pages extends LiftView with Injection {
   @Inject
@@ -20,9 +20,21 @@ class Pages extends LiftView with Injection {
     case pageId => () => renderPage(pageId)
   }
 
-  private def renderBlocks(page: Page) = page.blocks.flatMap(b => TextileParser.parse(b.text, None).get.toHtml)
+  private def renderBlocks(page: Page):NodeSeq = {
+    val pageId = page.name
+    page.blocks.flatMap(b => {
+      TextileParser.parse(b.text, None).get.toHtml ++ SHtml.a(<div>Remove block</div>) {
+        val pageWithBlockToRemove = model.find(classOf[Page], pageId).get
+        val toRemove = pageWithBlockToRemove.blocks.find(_.encodedKey == b.encodedKey).get
+        pageWithBlockToRemove.blocks.remove(toRemove)
+        refreshPageBlocksCmd(pageId)
+      }
+    })
+  }
 
   private def getTemplate(name:String) = TemplateFinder.findAnyTemplate("templates-hidden" :: name :: Nil) ?~ (name + " template not found")
+
+  private def refreshPageBlocksCmd(pageId:String) = JsCmds.SetHtml("pageblocks", renderBlocks(model.find(classOf[Page], pageId).get))
 
   private def renderPage(pageId: String) = {
     for{
@@ -43,7 +55,7 @@ class Pages extends LiftView with Injection {
             "submit" -> SHtml.ajaxSubmit(
               "Save", () => {
                 commiter.commit
-                JsCmds.CmdPair(JsCmds.SetHtml("editor", <div></div>), JsCmds.SetHtml("pageblocks", renderBlocks(model.find(classOf[Page], pageId).get)))
+                JsCmds.CmdPair(JsCmds.SetHtml("editor", <div></div>), refreshPageBlocksCmd(pageId))
               }
             )
           )
