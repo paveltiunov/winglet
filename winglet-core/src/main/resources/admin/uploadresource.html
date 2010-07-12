@@ -1,0 +1,14 @@
+<lift:surround with="default" at="content" xmlns:lift="lift" xmlns:f="f">
+    <h3>Upload resource</h3>
+
+    <lift:UploadResource.uploadForm form="POST" multipart="true">
+        <p><label for="url">Url:</label><br/>
+        <f:url id="url"/><br/></p>
+
+        <p><label for="file">File to upload:</label><br/>
+        <f:file id="file"/><br/></p>
+
+        <p><f:submit/></p>
+    </lift:UploadResource.uploadForm>
+</lift:surround>
+
