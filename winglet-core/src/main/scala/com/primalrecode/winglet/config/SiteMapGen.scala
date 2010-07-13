@@ -9,6 +9,7 @@ class SiteMapGen @Inject()(model: Model) {
   def generate(): SiteMap = {
     var entries = Menu(Loc("Home", List("index"), "Home")) ::
             Menu(Loc("Add page", List("admin", "addpage"), "Add page")) ::
+            Menu(Loc("Add template", List("admin", "addtemplate"), "Add template")) ::
             Menu(Loc("Upload resource", List("admin", "uploadresource"), "Upload resource")) ::
             Nil
     val pages = model.findAll[Page]("allPages")

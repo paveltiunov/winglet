@@ -1,0 +1,14 @@
+<lift:surround with="default" at="content" xmlns:lift="lift" xmlns:f="f">
+    <h3>Add template</h3>
+
+    <lift:Templates.createForm form="POST">
+        <p><label for="url">Uri:</label><br/>
+        <f:uri id="url"/><br/></p>
+
+        <p><label for="content">Content:</label><br/>
+        <f:content cols="100" rows="20" id="content"/><br/></p>
+
+        <p><f:submit/></p>
+    </lift:Templates.createForm>
+</lift:surround>
+

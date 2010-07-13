@@ -6,6 +6,7 @@
         <provider>org.datanucleus.store.appengine.jpa.DatastorePersistenceProvider</provider>
         <class>com.primalrecode.winglet.model.Page</class>
         <class>com.primalrecode.winglet.model.Resource</class>
+        <class>com.primalrecode.winglet.model.Template</class>
         <properties>
             <property name="datanucleus.NontransactionalRead" value="true"/>
             <property name="datanucleus.NontransactionalWrite" value="true"/>
