@@ -8,10 +8,10 @@ import java.util.List
 @NamedQuery(name = "allPages", query = "SELECT p FROM Page p")
 class Page {
   @BeanProperty
-  @Id
   var name: String = _
 
   @BeanProperty
+  @Id  
   var url: String = _
 
   @BeanProperty

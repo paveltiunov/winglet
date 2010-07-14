@@ -2,26 +2,24 @@ package com.primalrecode.winglet.view
 
 import com.primalrecode.winglet.{Model, Injection}
 import com.google.inject.Inject
-import _root_.net.liftweb.util.Helpers
-import Helpers._
 import net.liftweb.http.js.JsCmds
 import com.primalrecode.winglet.model.{Block, Page}
-import net.liftweb.http.{S, SHtml, TemplateFinder, LiftView}
 import scala.collection.JavaConversions._
 import net.liftweb.textile.TextileParser
 import net.liftweb.common.Box
 import xml.NodeSeq
+import net.liftweb.util.BindHelpers
+import net.liftweb.http._
 
-class Pages extends LiftView with Injection {
-  @Inject
-  var model: Model = _;
-
-  def dispatch = {
-    case pageId => () => renderPage(pageId)
+class Pages @Inject() (model:Model) extends BindHelpers with UriHelpers{
+  def dispatch:LiftRules.ViewDispatchPF = {
+    case splitUrl if splitUrl.length > 0 && pageExists(splitUrl) => Left(() => renderPage(splitUrl.uri))
   }
 
+  private def pageExists(splitUrl:List[String]) = model.find(classOf[Page], splitUrl.uri).isDefined
+
   private def renderBlocks(page: Page):NodeSeq = {
-    val pageId = page.name
+    val pageId = page.url
     page.blocks.flatMap(b => {
       TextileParser.parse(b.text, None).get.toHtml ++ SHtml.a(<div>Remove block</div>) {
         val pageWithBlockToRemove = model.find(classOf[Page], pageId).get
