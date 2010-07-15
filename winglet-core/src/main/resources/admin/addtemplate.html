@@ -1,14 +1,29 @@
-<lift:surround with="default" at="content" xmlns:lift="lift" xmlns:f="f">
-    <h3>Add template</h3>
+<lift:surround with="default" at="content" xmlns:lift="lift" xmlns:f="f" xmlns:t="t">
+    <h3>Templates</h3>
 
+    <p>
+        <lift:Templates.templates>
+            <t:editLink/>
+        </lift:Templates.templates>
+    </p>
+
+    <h3>Edit template</h3>
     <lift:Templates.createForm form="POST">
-        <p><label for="url">Uri:</label><br/>
-        <f:uri id="url"/><br/></p>
+        <p>
+            <label>Uri:</label><br/>
+            <f:uri/>
+            <br/>
+        </p>
 
-        <p><label for="content">Content:</label><br/>
-        <f:content cols="100" rows="20" id="content"/><br/></p>
+        <p>
+            <label>Content:</label><br/>
+            <f:content cols="100" rows="20"/>
+            <br/>
+        </p>
 
-        <p><f:submit/></p>
+        <p>
+            <f:submit/>
+        </p>
     </lift:Templates.createForm>
 </lift:surround>
 

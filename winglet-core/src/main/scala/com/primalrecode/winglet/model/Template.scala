@@ -1,10 +1,11 @@
 package com.primalrecode.winglet.model
 
 import reflect.BeanProperty
-import javax.persistence.{Lob, Id, Entity}
 import com.primalrecode.winglet.Model
+import javax.persistence.{NamedQuery, Lob, Id, Entity}
 
 @Entity
+@NamedQuery(name = "allTemplates", query = "SELECT t FROM Template t")
 class Template {
   @Id
   @BeanProperty
@@ -22,4 +23,8 @@ object Template {
     template.content = content
     model.persist(template)
   }
+
+  def allTemplates(implicit model:Model) = model.findAll[Template]("allTemplates")
+
+  def reload(template:Template)(implicit model:Model) = model.find(classOf[Template], template.uri).get
 }
