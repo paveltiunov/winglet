@@ -21,7 +21,10 @@ object Template {
     val template = new Template
     template.uri = uri
     template.content = content
-    model.persist(template)
+    val transaction = model.getTransaction
+    transaction.begin
+    model.persistAndFlush(template)
+    transaction.commit
   }
 
   def allTemplates(implicit model:Model) = model.findAll[Template]("allTemplates")
