@@ -1,34 +1,40 @@
 <lift:surround with="default" at="content" xmlns:lift="lift" xmlns:f="f" xmlns:t="t">
     <h3>Templates</h3>
 
-    <p>
-        <lift:Templates.templates>
-            <table>
-                <tr>
-                    <td><t:edit/></td>
-                    <td><t:remove/></td>
-                </tr>
-            </table>
-        </lift:Templates.templates>
-    </p>
-
-    <h3>Edit template</h3>
-    <lift:Templates.createForm form="POST">
+    <lift:Templates.templates>
         <p>
-            <label>Uri:</label><br/>
-            <f:uri/>
-            <br/>
+            <t:templateList>
+                <table>
+                    <tr>
+                        <td>
+                            <t:edit/>
+                        </td>
+                        <td>
+                            <t:remove>Remove</t:remove>
+                        </td>
+                    </tr>
+                </table>
+            </t:templateList>
         </p>
+        <h3>Edit template</h3>
+        <t:editForm>
+            <p>
+                <label>Uri:</label><br/>
+                <f:uri/>
+                <br/>
+            </p>
 
-        <p>
-            <label>Content:</label><br/>
-            <f:content cols="100" rows="20"/>
-            <br/>
-        </p>
+            <p>
+                <label>Content:</label><br/>
+                <f:content cols="100" rows="20"/>
+                <br/>
+            </p>
 
-        <p>
-            <f:submit/>
-        </p>
-    </lift:Templates.createForm>
+            <p>
+                <f:submit/>
+            </p>
+        </t:editForm>
+    </lift:Templates.templates>
+
 </lift:surround>
 
