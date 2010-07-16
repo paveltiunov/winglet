@@ -30,4 +30,11 @@ object Template {
   def allTemplates(implicit model:Model) = model.findAll[Template]("allTemplates")
 
   def reload(template:Template)(implicit model:Model) = model.find(classOf[Template], template.uri).get
+
+  def remove(template:Template)(implicit model:Model) {
+    val transaction = model.getTransaction
+    transaction.begin
+    model.removeAndFlush(reload(template))
+    transaction.commit
+  }
 }

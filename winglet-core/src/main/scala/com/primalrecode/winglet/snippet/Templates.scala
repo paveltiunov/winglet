@@ -10,6 +10,9 @@ import net.liftweb.http.js.{JE, JsCmds}
 class Templates extends StatefulSnippet with ModelAccess with BindHelpers {
   private var uri:String = ""
   private var content:String = ""
+  private val uriFieldId = "uriField"
+  private var contentFieldId = "contentField"
+  private var templateListId = "templateList"
 
   def dispatch = {
     case "createForm" => createForm _
@@ -18,15 +21,24 @@ class Templates extends StatefulSnippet with ModelAccess with BindHelpers {
 
   def createForm(in:NodeSeq) = bind(
     "f", in,
-    "uri" -%> SHtml.text(uri, uri = _, "id" -> "uri"),
-    "content" -%> SHtml.textarea(content, content = _, "id" -> "content"),
+    "uri" -%> SHtml.text(uri, uri = _, "id" -> uriFieldId),
+    "content" -%> SHtml.textarea(content, content = _, "id" -> contentFieldId),
     "submit" -%> SHtml.submit("Save", createTemplate)
   )
 
-  def templates(in:NodeSeq):NodeSeq = Template.allTemplates.flatMap(t => bind("t", in, "editLink" -> SHtml.a(<div>{t.uri}</div>) {
-    val template = Template.reload(t)
-    JsCmds.SetValById("uri", JE.strToS(template.uri)) & JsCmds.SetValById("content", JE.strToS(template.content))
-  }))
+  def templates(in:NodeSeq):NodeSeq = <div id={templateListId}>{templatesContent(in)}</div>
+
+  def templatesContent(in:NodeSeq):NodeSeq = Template.allTemplates.flatMap(t => bind(
+    "t", in,
+    "edit" -> SHtml.a(<div>{t.uri}</div>) {
+      val template = Template.reload(t)
+      JsCmds.SetValById(uriFieldId, JE.strToS(template.uri)) & JsCmds.SetValById(contentFieldId, JE.strToS(template.content))
+    },
+    "remove" -> SHtml.a(<div>Remove</div>) {
+      Template.remove(t)
+      JsCmds.SetHtml(templateListId, templatesContent(in))
+    }
+  ))
 
   def createTemplate() = Template.create(uri, content)
 }
