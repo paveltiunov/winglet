@@ -1,10 +1,11 @@
 package com.primalrecode.winglet.model
 
 import reflect.BeanProperty
-import javax.persistence.{Lob, Id, Entity}
 import com.primalrecode.winglet.Model
+import javax.persistence.{NamedQuery, Lob, Id, Entity}
 
 @Entity
+@NamedQuery(name = "allResources", query = "SELECT r FROM Resource r")
 class Resource {
   @BeanProperty
   @Id
@@ -18,7 +19,7 @@ class Resource {
   var mimeType:String = _
 }
 
-object Resource {
+object Resource extends ModelSugar[Resource]{
   def create(url:String, content:Array[Byte], mimeType:String) (implicit model:Model) {
     val resource = new Resource
     resource.url = url
@@ -26,4 +27,10 @@ object Resource {
     resource.mimeType = mimeType
     model.persist(resource)
   }
+
+  def entityId(e: Resource) = e.url
+
+  def entityClass = classOf[Resource]
+
+  def allQueryName = "allResources"
 }

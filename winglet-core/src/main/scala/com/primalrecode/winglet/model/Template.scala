@@ -28,5 +28,7 @@ object Template extends ModelSugar[Template]{
 
   def entityId(e: Template) = e.uri
 
-  def allTemplates(implicit model:Model) = model.findAll[Template]("allTemplates")
+  def allTemplates(implicit model:Model) = all
+
+  def allQueryName = "allTemplates"
 }

@@ -31,5 +31,7 @@ object Page extends ModelSugar[Page] {
 
   def entityClass = classOf[Page]
 
-  def allPages(implicit model:Model) = model.findAll[Page]("allPages")
+  def allPages(implicit model:Model) = all
+
+  def allQueryName = "allPages"
 }

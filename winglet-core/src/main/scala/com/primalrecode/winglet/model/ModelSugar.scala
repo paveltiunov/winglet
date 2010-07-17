@@ -14,6 +14,10 @@ trait ModelSugar[T <: AnyRef] {
     model.inTransaction(() => model.removeAndFlush(reload(e)))
   }
 
+  def all(implicit model:Model) = model.findAll[T](allQueryName)
+
+  def allQueryName:String
+
   implicit def toSugar(model:Model) = Sugar(model)
 
   case class Sugar(model:Model) {

@@ -1,14 +1,39 @@
-<lift:surround with="default" at="content" xmlns:lift="lift" xmlns:f="f">
-    <h3>Upload resource</h3>
+<lift:surround with="default" at="content" xmlns:lift="lift" xmlns:e="e" xmlns:f="f">
+    <h3>Resources</h3>
 
-    <lift:UploadResource.uploadForm form="POST" multipart="true">
-        <p><label for="url">Url:</label><br/>
-        <f:url id="url"/><br/></p>
+    <lift:Resources.editor>
+        <p>
+            <e:entityList>
+                <table>
+                    <tr>
+                        <td>
+                            <e:edit/>
+                        </td>
+                        <td>
+                            <e:remove>Remove</e:remove>
+                        </td>
+                    </tr>
+                </table>
+            </e:entityList>
+        </p>
+        <h3>Edit resource</h3>
+        <e:editForm>
+            <p>
+                <label>Uri:</label><br/>
+                <f:uri/>
+                <br/>
+            </p>
 
-        <p><label for="file">File to upload:</label><br/>
-        <f:file id="file"/><br/></p>
+            <p>
+                <label>File to upload:</label><br/>
+                <f:file/>
+                <br/>
+            </p>
 
-        <p><f:submit/></p>
-    </lift:UploadResource.uploadForm>
+            <p>
+                <f:submit/>
+            </p>
+        </e:editForm>
+    </lift:Resources.editor>
 </lift:surround>
 
