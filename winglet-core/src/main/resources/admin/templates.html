@@ -1,23 +1,23 @@
-<lift:surround with="default" at="content" xmlns:lift="lift" xmlns:f="f" xmlns:t="t">
+<lift:surround with="default" at="content" xmlns:lift="lift" xmlns:f="f" xmlns:e="e">
     <h3>Templates</h3>
 
     <lift:Templates.templates>
         <p>
-            <t:templateList>
+            <e:entityList>
                 <table>
                     <tr>
                         <td>
-                            <t:edit/>
+                            <e:edit/>
                         </td>
                         <td>
-                            <t:remove>Remove</t:remove>
+                            <e:remove>Remove</e:remove>
                         </td>
                     </tr>
                 </table>
-            </t:templateList>
+            </e:entityList>
         </p>
         <h3>Edit template</h3>
-        <t:editForm>
+        <e:editForm>
             <p>
                 <label>Uri:</label><br/>
                 <f:uri/>
@@ -33,7 +33,7 @@
             <p>
                 <f:submit/>
             </p>
-        </t:editForm>
+        </e:editForm>
     </lift:Templates.templates>
 
 </lift:surround>
