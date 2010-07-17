@@ -16,25 +16,17 @@ class Template {
   var content:String = _
 }
 
-object Template {
+object Template extends ModelSugar[Template]{
   def create(uri:String, content:String)(implicit model:Model) = {
     val template = new Template
     template.uri = uri
     template.content = content
-    val transaction = model.getTransaction
-    transaction.begin
-    model.persistAndFlush(template)
-    transaction.commit
+    model.inTransaction(() => model.persistAndFlush(template))
   }
+
+  def entityClass = classOf[Template]
+
+  def entityId(e: Template) = e.uri
 
   def allTemplates(implicit model:Model) = model.findAll[Template]("allTemplates")
-
-  def reload(template:Template)(implicit model:Model) = model.find(classOf[Template], template.uri).get
-
-  def remove(template:Template)(implicit model:Model) {
-    val transaction = model.getTransaction
-    transaction.begin
-    model.removeAndFlush(reload(template))
-    transaction.commit
-  }
 }

@@ -1,14 +1,39 @@
-<lift:surround with="default" at="content" xmlns:lift="lift">
-    <h3>Add page</h3>
+<lift:surround with="default" at="content" xmlns:lift="lift" xmlns:e="e" xmlns:f="f">
+    <h3>Pages</h3>
 
-    <lift:Admin.addPage form="POST">
-        <p><label for="name">Name:</label><br/>
-        <page:name/><br/></p>
+    <lift:Pages.editor>
+        <p>
+            <e:entityList>
+                <table>
+                    <tr>
+                        <td>
+                            <e:edit/>
+                        </td>
+                        <td>
+                            <e:remove>Remove</e:remove>
+                        </td>
+                    </tr>
+                </table>
+            </e:entityList>
+        </p>
+        <h3>Edit page</h3>
+        <e:editForm>
+            <p>
+                <label>Uri:</label><br/>
+                <f:uri/>
+                <br/>
+            </p>
 
-        <p><label for="url">Url:</label><br/>
-        <page:url/><br/></p>
+            <p>
+                <label>Name:</label><br/>
+                <f:name/>
+                <br/>
+            </p>
 
-        <p><page:submit/></p>
-    </lift:Admin.addPage>
+            <p>
+                <f:submit/>
+            </p>
+        </e:editForm>
+    </lift:Pages.editor>
 </lift:surround>
 
