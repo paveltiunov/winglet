@@ -16,14 +16,18 @@ class Page {
   var url: String = _
 
   @BeanProperty
+  var includeInMenu:Boolean = _
+
+  @BeanProperty
   var blocks: List[Block] = _
 }
 
 object Page extends ModelSugar[Page] {
-  def create(name:String, url:String)(implicit model:Model) = {
+  def create(name:String, url:String, includeInMenu:Boolean)(implicit model:Model) = {
     val page = new Page
     page.name = name
     page.url = url
+    page.includeInMenu = includeInMenu
     model.inTransaction(() => model.persistAndFlush(page))
   }
 

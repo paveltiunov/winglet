@@ -4,31 +4,31 @@ import net.liftweb.util.BindHelpers
 import java.lang.String
 import xml._
 import net.liftweb.http.js.{JsExp, JsCmds, JE, JsCmd}
-import net.liftweb.builtin.snippet.Form
 import net.liftweb.http.{S, SHtml, FileParamHolder}
+import net.liftweb.common.Full
 
 trait EntityEditor[E] extends BindHelpers {
   private val entityListId = "entityList"
 
   def editForm(listRefreshCmd: () => JsCmd)(in: NodeSeq) = {
-    val bindParams: Seq[BindParam] = submitBindParam(listRefreshCmd) :: entityFields.map(f => f.name -%> f.editorField % (new UnprefixedAttribute("id", f.fieldId, Null)))
+    val bindParams: Seq[BindParam] = submitBindParam(listRefreshCmd) :: entityFields.map(f => f.name -> f.editorFieldWithId)
     wrapInForm(bind("f", in, bindParams: _*))
   }
 
-  def wrapInForm(in:NodeSeq) = if (ajaxForm) SHtml.ajaxForm(in) else <form method="post" enctype="multipart/form-data" action={S.uri}>{in}</form>
+  def wrapInForm(in:NodeSeq) = if (isAjaxForm) SHtml.ajaxForm(in) else <form method="post" enctype="multipart/form-data" action={S.uri}>{in}</form>
 
   def submitBindParam(listRefreshCmd: () => JsCmd): BindParam = "submit" -%> (
-    if (ajaxForm) SHtml.ajaxSubmit("Save", () => {
+    if (isAjaxForm) SHtml.ajaxSubmit("Save", () => {
       saveEntity()
       listRefreshCmd()
     })
     else SHtml.submit("Save", saveEntity))
 
-  def ajaxForm:Boolean = !containFileEntity(entityFields)
+  def isAjaxForm:Boolean = !containFileEntity(entityFields)
 
   private def containFileEntity(fields: List[EntityField[E]]):Boolean = fields match {
     case Nil => false
-    case x :: xs => if (x.isInstanceOf[TextEntityField[E]]) true else containFileEntity(xs)
+    case x :: xs => if (x.isInstanceOf[FileEntityField[E]]) true else containFileEntity(xs)
   }
 
   def entityFields: List[EntityField[E]]
@@ -73,7 +73,7 @@ trait EntityField[E] {
 
   def editorField(saveFun: T => Unit): Elem
 
-  def editorField: Elem = editorField(saveFun)
+  def editorFieldWithId: NodeSeq = editorField(saveFun) % (new UnprefixedAttribute("id", fieldId, Null))
 
   def applyToEditorCmd(entity: E): JsCmd = JsCmds.SetValById(fieldId, applyToEditorExp(entity))
 
@@ -92,6 +92,17 @@ case class TextAreaEntityField[E](name: String, saveFun: String => Unit, fieldVa
   def editorField(saveFun: (String) => Unit) = SHtml.textarea("", saveFun)
 
   def applyToEditorExp(entity: E) = JE.strToS(fieldValueFun(entity))
+}
+
+case class CheckboxEntityField[E](name: String, saveFun: Boolean => Unit, fieldValueFun: E => Boolean) extends EntityField[E] {
+  type T = Boolean
+  def editorField(saveFun: (Boolean) => Unit) = null
+
+  override def editorFieldWithId = SHtml.checkbox_id(false, saveFun, Full(fieldId))
+
+  def applyToEditorExp(entity: E) = null
+
+  override def applyToEditorCmd(entity: E) = JsCmds.SetExp(JE.CheckedById(fieldId), if (fieldValueFun(entity)) JE.strToS("checked") else JE.JsNull)
 }
 
 case class FileEntityField[E](name: String, saveFun: FileParamHolder => Unit) extends EntityField[E] {
