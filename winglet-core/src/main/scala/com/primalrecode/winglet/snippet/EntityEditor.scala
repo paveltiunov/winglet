@@ -11,7 +11,10 @@ trait EntityEditor[E] extends BindHelpers {
   private val entityListId = "entityList"
 
   def editForm(listRefreshCmd: () => JsCmd)(in: NodeSeq) = {
-    val bindParams: Seq[BindParam] = submitBindParam(listRefreshCmd) :: entityFields.map(f => f.name -> f.editorFieldWithId)
+    val bindParams: Seq[BindParam] = submitBindParam(listRefreshCmd) :: entityFields.map(f => f.editorFieldWithId match {
+      case Seq(e:Elem) => f.name -%> e
+      case nodes => f.name -> nodes
+    })
     wrapInForm(bind("f", in, bindParams: _*))
   }
 
