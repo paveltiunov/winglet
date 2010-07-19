@@ -11,6 +11,7 @@ import net.liftweb.util.BindHelpers
 import net.liftweb.http._
 import js.JsCmds.SetHtml
 import xml.{Text, Elem, NodeSeq}
+import com.primalrecode.winglet.auth.isAdminUser
 
 class Pages @Inject() (implicit val model:Model) extends BindHelpers with UriHelpers{
   def dispatch:LiftRules.ViewDispatchPF = {
@@ -36,9 +37,16 @@ class Pages @Inject() (implicit val model:Model) extends BindHelpers with UriHel
     val pageId = page.url
     page.blocks.flatMap(b => {
       val commiter = new BlockCommiter(pageId, b)
-      TextileParser.parse(b.text, None).get.toHtml ++ editorArea(commiter) ++ removeLink(pageId, b) ++ editLink (pageId, b, commiter)
+      TextileParser.parse(b.text, None).get.toHtml ++ editButtons(pageId, b, commiter)
     })
   }
+
+  private def editButtons(pageId:String, b:Block, commiter:BlockCommiter) =
+    if (isAdminUser.get) editorArea(commiter) ::
+          removeLink(pageId, b) ::
+          editLink (pageId, b, commiter) ::
+          Nil
+    else Nil
 
   private def getTemplate(name:String) = TemplateFinder.findAnyTemplate("templates-hidden" :: name :: Nil) ?~ (name + " template not found")
 
@@ -70,11 +78,13 @@ class Pages @Inject() (implicit val model:Model) extends BindHelpers with UriHel
       "page", template,
       "blocks" -> renderedBlocks,
       "name" -> page.name,
-      "addBlock" -> SHtml.a(<div>Add block</div>) {
-        setBlockEditorHtml(blockEditorTemplate, commiter, pageId)
-      }
+      "addBlock" -> addBlockButton (blockEditorTemplate, commiter, pageId)
     )
   }
+
+  private def addBlockButton(blockEditorTemplate:NodeSeq, commiter:BlockCommiter, pageId:String) = if (isAdminUser.get) SHtml.a(<div>Add block</div>) {
+    setBlockEditorHtml(blockEditorTemplate, commiter, pageId)
+  } else <div></div>
 
   class BlockCommiter(pageId:String, var block:Block) { //TODO: extract two classes
     var blockText: String = _
