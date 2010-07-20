@@ -2,14 +2,15 @@ package com.primalrecode.winglet.view
 
 import com.primalrecode.winglet.{Model}
 import com.google.inject.Inject
-import net.liftweb.http.js.JsCmds
 import com.primalrecode.winglet.model.{Block, Page}
 import scala.collection.JavaConversions._
 import net.liftweb.textile.TextileParser
 import net.liftweb.common.Box
 import net.liftweb.util.BindHelpers
 import net.liftweb.http._
+import js.jquery.JqJsCmds
 import js.JsCmds.SetHtml
+import js.{JE, JsCmd, JsCmds}
 import xml.{Text, Elem, NodeSeq}
 import com.primalrecode.winglet.auth.isAdminUser
 
@@ -28,7 +29,7 @@ class Pages @Inject() (implicit val model:Model) extends BindHelpers with UriHel
   }
 
   def editLink(pageId:String, block:Block, commiter:BlockCommiter): Elem = SHtml.a(Text("Edit block")) {
-    setBlockEditorHtml(getTemplate("blockeditor").open_!, commiter, pageId)
+    editorDialog(getTemplate("blockeditor").open_!, commiter, pageId)
   }
 
   def editorArea(commiter:BlockCommiter) = <div id={commiter.editorId}></div>
@@ -52,19 +53,19 @@ class Pages @Inject() (implicit val model:Model) extends BindHelpers with UriHel
 
   private def refreshPageBlocksCmd(pageId:String) = JsCmds.SetHtml("pageblocks", renderBlocks(model.find(classOf[Page], pageId).get))
 
-  def setBlockEditorHtml(blockEditorTemplate: NodeSeq, commiter: Pages#BlockCommiter, pageId: String): SetHtml = {
-    JsCmds.SetHtml(
-      commiter.editorId, bind(
+  def editorDialog(blockEditorTemplate: NodeSeq, commiter: Pages#BlockCommiter, pageId: String): JsCmd = {
+    JqJsCmds.ModalDialog(bind(
         "e", blockEditorTemplate,
         "textArea" -%> SHtml.textarea(commiter.blockText, commiter.blockText = _),
         "submit" -> SHtml.ajaxSubmit(
           "Save", () => {
             commiter.commit
-            JsCmds.SetHtml(commiter.editorId, <div></div>) & refreshPageBlocksCmd(pageId)
+            JqJsCmds.Unblock & refreshPageBlocksCmd(pageId)
           }
-          )
+          ),
+        "cancel" -> SHtml.ajaxButton("Cancel", () => JqJsCmds.Unblock)
         )
-      )
+      , JE.JsObj(("width", JE.strToS("60%")), ("top", JE.strToS("20%")), ("left", JE.strToS("20%"))))
   }
 
   private def renderPage(pageId: String) = {
@@ -83,7 +84,7 @@ class Pages @Inject() (implicit val model:Model) extends BindHelpers with UriHel
   }
 
   private def addBlockButton(blockEditorTemplate:NodeSeq, commiter:BlockCommiter, pageId:String) = if (isAdminUser.get) SHtml.a(<div>Add block</div>) {
-    setBlockEditorHtml(blockEditorTemplate, commiter, pageId)
+    editorDialog(blockEditorTemplate, commiter, pageId)
   } else <div></div>
 
   class BlockCommiter(pageId:String, var block:Block) { //TODO: extract two classes
