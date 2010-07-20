@@ -6,12 +6,13 @@ import xml._
 import net.liftweb.http.js.{JsExp, JsCmds, JE, JsCmd}
 import net.liftweb.http.{S, SHtml, FileParamHolder}
 import net.liftweb.common.Full
+import net.liftweb.http.js.jquery.JqJsCmds
 
 trait EntityEditor[E] extends BindHelpers {
   private val entityListId = "entityList"
 
   def editForm(listRefreshCmd: () => JsCmd)(in: NodeSeq) = {
-    val bindParams: Seq[BindParam] = submitBindParam(listRefreshCmd) :: entityFields.map(f => f.editorFieldWithId match {
+    val bindParams: Seq[BindParam] = submitBindParam(listRefreshCmd) :: cancelBindParam :: entityFields.map(f => f.editorFieldWithId match {
       case Seq(e:Elem) => f.name -%> e
       case nodes => f.name -> nodes
     })
@@ -23,9 +24,11 @@ trait EntityEditor[E] extends BindHelpers {
   def submitBindParam(listRefreshCmd: () => JsCmd): BindParam = "submit" -%> (
     if (isAjaxForm) SHtml.ajaxSubmit("Save", () => {
       saveEntity()
-      listRefreshCmd()
+      listRefreshCmd() & JqJsCmds.Unblock
     })
     else SHtml.submit("Save", saveEntity))
+  
+  def cancelBindParam():BindParam = "cancel" -%> SHtml.ajaxButton("Cancel", () => JqJsCmds.Unblock)
 
   def isAjaxForm:Boolean = !containFileEntity(entityFields)
 
@@ -40,32 +43,45 @@ trait EntityEditor[E] extends BindHelpers {
 
   def allEntities: Seq[E]
 
-  def editor(in: NodeSeq) = bind("e", in, "entityList" -%> entityList _, "editForm" -%> editForm(() => entityListRefreshCmd(chooseTemplate("e", "entityList", in))) _)
+  private def chooseEditFormTemplate(in:NodeSeq) = chooseTemplate("e", "editForm", in)
+  private def chooseUpdateAreaTemplate(in:NodeSeq) = chooseTemplate("e", "updateArea", in)
 
-  def entityList(in: NodeSeq): Elem = <div id={entityListId}>
-    {entityListContent(in)}
-  </div>
+  def editor(in: NodeSeq) = bind("e", in, 
+    "editForm" -> Nil,
+    "addEntity" -%> addEntityLink(chooseEditFormTemplate(in), chooseUpdateAreaTemplate(in)) _,
+    "updateArea" -%> updateArea(chooseEditFormTemplate(in)) _
+  )
 
-  def entityListContent(in: NodeSeq): NodeSeq = allEntities.flatMap(e => bind(
+  private def updateArea(editFormTemplate:NodeSeq)(in:NodeSeq) = <div id={entityListId}>{updateAreaContent(editFormTemplate, in)}</div>
+
+  private def updateAreaContent(editFormTemplate:NodeSeq, in:NodeSeq) = bind("e", in,
+    "entityList" -> entityList(editFormTemplate, in) _
+  )
+
+  private def entityList(editFormTemplate: NodeSeq, updateAreaTemplate:NodeSeq)(in: NodeSeq): NodeSeq = allEntities.flatMap(e => bind(
     "e", in,
     "edit" -> SHtml.a(Text(entityListName(e))) {
-      applyEntityToEditorCmd(e)
+      editFormDialog(editFormTemplate, updateAreaTemplate) & applyEntityToEditorCmd(e)
     },
     "remove" -%> {
       linkText => SHtml.a(linkText) {
         removeEntity(e)
-        entityListRefreshCmd(in)
+        entityListRefreshCmd(editFormTemplate, updateAreaTemplate)
       }
     }
-    ))
+  ))
 
-  def applyEntityToEditorCmd(e: E): JsCmd = entityFields.map(_.applyToEditorCmd(e)).reduceLeft(_ & _)
+  private def addEntityLink(editFormTemplate: NodeSeq, updateAreaTemplate: NodeSeq)(in:NodeSeq) = SHtml.a(in) {editFormDialog(editFormTemplate, updateAreaTemplate)}
+
+  private def editFormDialog(editFormTemplate: NodeSeq, updateAreaTemplate: NodeSeq) = JqJsCmds.ModalDialog(editForm(() => entityListRefreshCmd(editFormTemplate, updateAreaTemplate))(editFormTemplate))
+
+  private def applyEntityToEditorCmd(e: E): JsCmd = entityFields.map(_.applyToEditorCmd(e)).reduceLeft(_ & _)
 
   def entityListName(entity: E): String
 
   def removeEntity(entity: E): Unit
 
-  def entityListRefreshCmd(entityListTemplate:NodeSeq) = JsCmds.SetHtml(entityListId, entityListContent(entityListTemplate))
+  private def entityListRefreshCmd(editFormTemplate: NodeSeq, updateAreaTemplate:NodeSeq) = JsCmds.SetHtml(entityListId, updateAreaContent(editFormTemplate, updateAreaTemplate))
 }
 
 trait EntityField[E] {
