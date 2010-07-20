@@ -80,7 +80,9 @@ trait EntityEditor[E] extends BindHelpers {
   }
 
   private def editFormDialog(originalUri:String, editFormTemplate: NodeSeq, updateAreaTemplate: NodeSeq) =
-    JqJsCmds.ModalDialog(editForm(originalUri, () => entityListRefreshCmd(editFormTemplate, updateAreaTemplate))(editFormTemplate))
+    JqJsCmds.ModalDialog(editForm(originalUri,
+      () => entityListRefreshCmd(editFormTemplate, updateAreaTemplate))(editFormTemplate),
+      JE.JsObj(("width", JE.strToS("60%")), ("top", JE.strToS("20%")), ("left", JE.strToS("20%"))))
 
   private def applyEntityToEditorCmd(e: E): JsCmd = entityFields.map(_.applyToEditorCmd(e)).reduceLeft(_ & _)
 
