@@ -2,9 +2,9 @@ package com.primalrecode.winglet.config
 
 import com.primalrecode.winglet.BootPoint
 import net.liftweb.sitemap.{Menu, Loc, SiteMap}
-import net.liftweb.http.LiftRules
 import com.google.inject.Inject
 import com.primalrecode.winglet.view.{Pages, TemplateView, ResourceView}
+import net.liftweb.http.{ResourceServer, LiftRules}
 
 class CoreBootPoint @Inject() (siteMapGen:SiteMapGen,
                                resourceView: ResourceView,
@@ -18,5 +18,10 @@ class CoreBootPoint @Inject() (siteMapGen:SiteMapGen,
     LiftRules.dispatch.prepend(resourceView.dispatch)
     LiftRules.viewDispatch.prepend(pages.dispatch)
     LiftRules.viewDispatch.prepend(templateView.dispatch)
+    val oldAllowedPaths = ResourceServer.allowedPaths
+    ResourceServer.allowedPaths = {
+      case "jquery.blockUI.js" :: Nil => true
+      case path => oldAllowedPaths(path)
+    }
   }
 }
