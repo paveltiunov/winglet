@@ -126,7 +126,7 @@ code {
 
 /* default forms */
 form {}
-form input, form textarea {
+form input, form textarea, button {
 	border:2px solid #dddddd;
 	padding:5px;
 	color:#666666;
