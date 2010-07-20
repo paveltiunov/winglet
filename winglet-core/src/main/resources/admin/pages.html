@@ -3,8 +3,13 @@
 
     <lift:Pages.editor>
         <p>
-            <e:entityList>
-                <table>
+        <e:updateArea>
+            <table>
+                <tr>
+                    <th>Uri</th>
+                    <th>Actions</th>
+                </tr>
+                <e:entityList>
                     <tr>
                         <td>
                             <e:edit/>
@@ -13,10 +18,11 @@
                             <e:remove>Remove</e:remove>
                         </td>
                     </tr>
-                </table>
-            </e:entityList>
+                </e:entityList>
+            </table>
+        </e:updateArea>
         </p>
-        <h3>Edit page</h3>
+        <e:addEntity>Add page</e:addEntity>
         <e:editForm>
             <p>
                 <label>Uri:</label><br/>

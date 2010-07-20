@@ -3,8 +3,13 @@
 
     <lift:Templates.templates>
         <p>
-            <e:entityList>
-                <table>
+        <e:updateArea>
+            <table>
+                <tr>
+                    <th>Uri</th>
+                    <th>Actions</th>
+                </tr>
+                <e:entityList>
                     <tr>
                         <td>
                             <e:edit/>
@@ -13,10 +18,11 @@
                             <e:remove>Remove</e:remove>
                         </td>
                     </tr>
-                </table>
-            </e:entityList>
+                </e:entityList>
+            </table>
+        </e:updateArea>
         </p>
-        <h3>Edit template</h3>
+        <e:addEntity>Add template</e:addEntity>
         <e:editForm>
             <p>
                 <label>Uri:</label><br/>
@@ -31,7 +37,7 @@
             </p>
 
             <p>
-                <f:submit/>
+                <f:submit/><f:cancel/>
             </p>
         </e:editForm>
     </lift:Templates.templates>
