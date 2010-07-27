@@ -1,5 +1,5 @@
 package com.primalrecode.winglet.auth
 
-import net.liftweb.http.{RequestVar}
+import net.liftweb.http.{TransientRequestVar, RequestVar}
 
-object isAdminUser extends RequestVar[Boolean](false) 
+object isAdminUser extends TransientRequestVar[Boolean](false) 

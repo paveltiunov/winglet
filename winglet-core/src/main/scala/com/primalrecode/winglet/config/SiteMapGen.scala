@@ -6,11 +6,13 @@ import com.primalrecode.winglet.Model
 import com.primalrecode.winglet.model.Page
 import com.primalrecode.winglet.view.UriHelpers
 import net.liftweb.sitemap.Loc._
+import com.primalrecode.winglet.auth.isAdminUser
+import net.liftweb.http.ForbiddenResponse
 
 class SiteMapGen @Inject()(model: Model) extends UriHelpers {
   def generate(): SiteMap = {
     var entries = Menu(Loc("Home", List("index"), "Home")) ::
-            Menu(Loc("Admin", List("admin", "index"), "Administration"),
+            Menu(Loc("Admin", List("admin", "index"), "Administration", If(() => isAdminUser, () => ForbiddenResponse())),
               Menu(Loc("Pages", List("admin", "pages"), "Pages", LocGroup("admin"), Hidden)),
               Menu(Loc("Templates", List("admin", "templates"), "Templates", LocGroup("admin"), Hidden)),
               Menu(Loc("Resources", List("admin", "resources"), "Resources", LocGroup("admin"), Hidden))
