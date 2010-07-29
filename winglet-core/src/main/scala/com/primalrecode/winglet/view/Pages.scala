@@ -13,6 +13,7 @@ import js.JsCmds.SetHtml
 import js.{JE, JsCmd, JsCmds}
 import xml.{Text, Elem, NodeSeq}
 import com.primalrecode.winglet.auth.isAdminUser
+import com.primalrecode.winglet.blocks.{TextBlockHandler, BlockHandler}
 
 class Pages @Inject() (implicit val model:Model) extends BindHelpers with UriHelpers{
   def dispatch:LiftRules.ViewDispatchPF = {
@@ -32,19 +33,16 @@ class Pages @Inject() (implicit val model:Model) extends BindHelpers with UriHel
     editorDialog(getTemplate("blockeditor").open_!, commiter, pageId)
   }
 
-  def editorArea(commiter:BlockCommiter) = <div id={commiter.editorId}></div>
-
   private def renderBlocks(page: Page):NodeSeq = {
     val pageId = page.url
     page.blocks.flatMap(b => {
       val commiter = new BlockCommiter(pageId, b)
-      TextileParser.parse(b.text, None).get.toHtml ++ editButtons(pageId, b, commiter)
+      commiter.blockHandler.render ++ editButtons(pageId, b, commiter)
     })
   }
 
   private def editButtons(pageId:String, b:Block, commiter:BlockCommiter) =
-    if (isAdminUser.get) editorArea(commiter) ::
-          removeLink(pageId, b) ::
+    if (isAdminUser) removeLink(pageId, b) ::
           editLink (pageId, b, commiter) ::
           Nil
     else Nil
@@ -56,7 +54,7 @@ class Pages @Inject() (implicit val model:Model) extends BindHelpers with UriHel
   def editorDialog(blockEditorTemplate: NodeSeq, commiter: Pages#BlockCommiter, pageId: String): JsCmd = {
     JqJsCmds.ModalDialog(bind(
         "e", blockEditorTemplate,
-        "textArea" -%> SHtml.textarea(commiter.blockText, commiter.blockText = _),
+        "editForm" -> commiter.blockHandler.editForm,
         "submit" -> SHtml.ajaxSubmit(
           "Save", () => {
             commiter.commit
@@ -74,39 +72,24 @@ class Pages @Inject() (implicit val model:Model) extends BindHelpers with UriHel
       template <- getTemplate("page")
       blockEditorTemplate <- getTemplate("blockeditor")
       val renderedBlocks = <div id="pageblocks">{renderBlocks(page)}</div>
-      val commiter = new BlockCommiter(pageId)
     } yield bind(
       "page", template,
       "blocks" -> renderedBlocks,
       "name" -> page.name,
-      "addBlock" -> addBlockButton (blockEditorTemplate, commiter, pageId)
+      "addBlock" -> addBlockButton (blockEditorTemplate, pageId)
     )
   }
 
-  private def addBlockButton(blockEditorTemplate:NodeSeq, commiter:BlockCommiter, pageId:String) = if (isAdminUser.get) SHtml.a(<div>Add block</div>) {
-    editorDialog(blockEditorTemplate, commiter, pageId)
+  private def addBlockButton(blockEditorTemplate:NodeSeq, pageId:String) = if (isAdminUser.get) SHtml.a(<div>Add block</div>) {
+    editorDialog(blockEditorTemplate, new BlockCommiter(pageId, null, BlockHandler.create(classOf[TextBlockHandler])), pageId)
   } else <div></div>
 
-  class BlockCommiter(pageId:String, var block:Block) { //TODO: extract two classes
-    var blockText: String = _
-    val editorId:String = ("editor" + (if (block != null) block.encodedKey else ""))
-            .replace("\"","_").replace("/","_").replace("(","_").replace(")","_") 
-
-    def this(pageId:String) = this(pageId, null)
-
-    if (block != null) {
-      blockText = block.text
-    }
+  class BlockCommiter(pageId:String, var block:Block, val blockHandler:BlockHandler[_]) {
+    def this(pageId:String, block:Block) = this(pageId, block, BlockHandler.create(block))
 
     def commit() {
-      val page = model.find(classOf[Page], pageId).get
-      if (block == null) {
-        val block = new Block
-        block.text = blockText
-        page.blocks.add(block)
-      } else {
-        Block.updateText(block, blockText)
-      }
+      if (block == null) blockHandler.addBlockToPage(pageId)
+      else blockHandler.saveToBlock(block)
     }
   }
 

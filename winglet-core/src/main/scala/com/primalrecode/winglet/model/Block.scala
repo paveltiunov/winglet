@@ -5,6 +5,8 @@ import javax.persistence._
 import com.google.appengine.api.datastore.Key
 import com.primalrecode.winglet.Model
 import com.thoughtworks.xstream.XStream
+import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider
+import com.primalrecode.winglet.util.GaeXStream
 
 @Entity
 class Block {
@@ -14,16 +16,12 @@ class Block {
 
   @BeanProperty
   @Lob
-  var text:String = _
-
-  @BeanProperty
-  @Lob
   var blockConfigXml:String = _
 }
 
 object Block extends ModelSugar[Block] {
   private val xstream = {
-    val xStream = new XStream
+    val xStream = GaeXStream.create
     xStream.alias("BlockConfig", classOf[BlockConfig[_]])
     xStream
   }
@@ -34,13 +32,16 @@ object Block extends ModelSugar[Block] {
 
   def entityClass = classOf[Block]
 
-  def updateText(block: Block, text:String)(implicit model:Model) = model.inTransaction(() => {
+  def blockConfig[T](block: Block):BlockConfig[T] = {
+    var blockConfig = xstream.fromXML(block.blockConfigXml).asInstanceOf[BlockConfig[T]]
+    blockConfig
+  }
+
+  def setBlockConfigToBlock(block: Block, blockConfig:BlockConfig[_]) = block.blockConfigXml = xstream.toXML(blockConfig)
+
+  def setBlockConfig(block: Block, blockConfig:BlockConfig[_])(implicit model:Model) = model.inTransaction(() => {
     val reloaded = reload(block)
-    reloaded.text = text
+    setBlockConfigToBlock(reloaded, blockConfig)
     model.flush
   })
-
-  def blockConfig[T](block: Block):BlockConfig[T] = xstream.fromXML(block.blockConfigXml).asInstanceOf[BlockConfig[T]]
-
-  def setBlockConfig(block: Block, blockConfig:BlockConfig[_]) = block.blockConfigXml = xstream.toXML(blockConfig)
 }
