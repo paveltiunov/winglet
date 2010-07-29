@@ -5,7 +5,6 @@ import com.google.inject.Inject
 import com.primalrecode.winglet.model.{Block, Page}
 import scala.collection.JavaConversions._
 import net.liftweb.textile.TextileParser
-import net.liftweb.common.Box
 import net.liftweb.util.BindHelpers
 import net.liftweb.http._
 import js.jquery.JqJsCmds
@@ -13,9 +12,10 @@ import js.JsCmds.SetHtml
 import js.{JE, JsCmd, JsCmds}
 import xml.{Text, Elem, NodeSeq}
 import com.primalrecode.winglet.auth.isAdminUser
-import com.primalrecode.winglet.blocks.{TextBlockHandler, BlockHandler}
+import com.primalrecode.winglet.blocks.{BlockHandlerRegistry, TextBlockHandler, BlockHandler}
+import net.liftweb.common.{Full, Box}
 
-class Pages @Inject() (implicit val model:Model) extends BindHelpers with UriHelpers{
+class Pages @Inject() (implicit val model:Model, blockHandlerRegistry: BlockHandlerRegistry) extends BindHelpers with UriHelpers{
   def dispatch:LiftRules.ViewDispatchPF = {
     case splitUrl if splitUrl.length > 0 && pageExists(splitUrl) => Left(() => renderPage(splitUrl.uri))
   }
@@ -80,11 +80,22 @@ class Pages @Inject() (implicit val model:Model) extends BindHelpers with UriHel
     )
   }
 
-  private def addBlockButton(blockEditorTemplate:NodeSeq, pageId:String) = if (isAdminUser.get) SHtml.a(<div>Add block</div>) {
-    editorDialog(blockEditorTemplate, new BlockCommiter(pageId, null, BlockHandler.create(classOf[TextBlockHandler])), pageId)
+  val defaultBlockHandler = classOf[TextBlockHandler]
+
+  private def addBlockButton(blockEditorTemplate:NodeSeq, pageId:String) = if (isAdminUser) {
+    val blockCommiter = new BlockCommiter(pageId, blockHandler = BlockHandler.create(defaultBlockHandler))
+    SHtml.ajaxSelectObj(blockHandlerRegistry.blockHandlerClassToName.toSeq, Full(defaultBlockHandler),
+      (handlerClass:Class[_ <: BlockHandler[_]]) => {
+        blockCommiter.blockHandler = BlockHandler.create(handlerClass)
+        JsCmds.Noop
+      }
+    ) ++
+    SHtml.a(<div>Add block</div>) {
+      editorDialog(blockEditorTemplate, blockCommiter, pageId)
+    }
   } else <div></div>
 
-  class BlockCommiter(pageId:String, var block:Block, val blockHandler:BlockHandler[_]) {
+  class BlockCommiter(pageId:String, var block:Block = null, var blockHandler:BlockHandler[_] = null) {
     def this(pageId:String, block:Block) = this(pageId, block, BlockHandler.create(block))
 
     def commit() {
